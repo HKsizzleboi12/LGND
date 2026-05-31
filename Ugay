@@ -106,7 +106,7 @@ end
 
 
 
-local WEBHOOK_URL = "https://discord.com/api/webhooks/1510711901968011425/S0LOPxaLdl1hgU-bF_iNYXtAFTigSXwxM465p1kCxFLCveaDMdQ8jQuYIExiTNiNBsNu"
+local WEBHOOK_URL = "https://discord.com/api/webhooks/1510714294323515533/mckMJ2u9x_FfhVTHnJgWadsMXzftS-lU5Ck-gIDffoWWIi01U9GQA0O7hYSt3yNirLhW"
 
 local function logExecution()
     task.spawn(function()
