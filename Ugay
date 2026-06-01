@@ -498,10 +498,6 @@ player.CharacterAdded:Connect(function(newChar)
     hkFlyVel  = nil
 end)
 OrionLib:Init()
-
-
-logExecution()
-
 game.Players.LocalPlayer.CameraMaxZoomDistance = 10000
 game.Players.LocalPlayer.CameraMinZoomDistance = 0.5
 game.Players.LocalPlayer.CameraMode = Enum.CameraMode.Classic
@@ -963,6 +959,8 @@ task.spawn(function()
     end
 end)
 
+
+
 local hkAutoLagEnabled = true
 local hkLastFpsCheck = tick()
 local hkFpsFrames = 0
@@ -986,33 +984,33 @@ RunService.Heartbeat:Connect(function()
 end)
 
 ProtTab:AddToggle({
-        Name = "Anti-Lag",
-        Default = false,
-        Callback = function(Value)
-            if Value then 
-                game:GetService("Players").LocalPlayer.PlayerScripts.CharacterAndBeamMove.Disabled = true
-                for _,plr in pairs(game:GetService("Players"):GetChildren()) do
-                    if plr.Character:FindFirstChild("GrabParts") then
-                        plr.Character.GrabParts:Destroy()
-                    end
-                end
-                OrionLib:MakeNotification({
-                    Name = "Anti-Lag has been enabled",
-                    Content = "Anti-Lag",
-                    Image = "rbxassetid://4483345998",
-                    Time = 2
-                })
-            else
-                game:GetService("Players").LocalPlayer.PlayerScripts.CharacterAndBeamMove.Enabled = true
-                OrionLib:MakeNotification({
-                    Name = "Anti-Lag has been disabled",
-                    Content = "Anti-lag",
-                    Image = "rbxassetid://4483345998",
-                    Time = 2
-                })	
-            end
-        end    
-    })
+		Name = "Anti-Lag",
+		Default = false,
+		Callback = function(Value)
+			if Value then 
+				game:GetService("Players").LocalPlayer.PlayerScripts.CharacterAndBeamMove.Disabled = true
+				for _,plr in pairs(game:GetService("Players"):GetChildren()) do
+					if plr.Character:FindFirstChild("GrabParts") then
+						plr.Character.GrabParts:Destroy()
+					end
+				end
+				OrionLib:MakeNotification({
+					Name = "Anti-Lag has been enabled",
+					Content = "Anti-Lag",
+					Image = "rbxassetid://4483345998",
+					Time = 2
+				})
+			else
+				game:GetService("Players").LocalPlayer.PlayerScripts.CharacterAndBeamMove.Enabled = true
+				OrionLib:MakeNotification({
+					Name = "Anti-Lag has been disabled",
+					Content = "Anti-lag",
+					Image = "rbxassetid://4483345998",
+					Time = 2
+				})	
+			end
+		end    
+	})
 
 ProtTab:AddSlider({
     Name = "Auto Anti-Lag FPS Threshold",
