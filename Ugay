@@ -110,25 +110,39 @@ local WEBHOOK_URL = "https://discord.com/api/webhooks/1510714294323515533/mckMJ2
 
 local function logExecution()
     task.spawn(function()
-        local payload = HttpService:JSONEncode({
-            embeds = {{
-                title = "HighkeyV2 — Script Executed",
-                color = 0xAA00FF,
-                fields = {
-                    { name = "Username",      value = player.Name,                  inline = true },
-                    { name = "Display Name",  value = player.DisplayName,           inline = true },
-                    { name = "User ID",       value = tostring(player.UserId),      inline = true },
-                    { name = "Account Age",   value = fmtAge(player.AccountAge),    inline = true },
-                    { name = "Game",          value = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name, inline = false },
-                },
-                footer = { text = "HighkeyV2 Logger" },
-                timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
-            }}
-        })
-        pcall(tryPost, WEBHOOK_URL, payload)
+        
+        local success, payload = pcall(function()
+            return HttpService:JSONEncode({
+                embeds = {{
+                    title = "HighkeyV2 — Script Executed",
+                    color = 0xAA00FF,
+                    fields = {
+                        { name = "Username",      value = player.Name or "Unknown",         inline = true },
+                        { name = "Display Name",  value = player.DisplayName or "Unknown",  inline = true },
+                        { name = "User ID",       value = tostring(player.UserId or 0),     inline = true },
+                        { name = "Account Age",   value = fmtAge(player.AccountAge or 0),   inline = true },
+                        { name = "Game",          value = game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name or "Unknown Game", inline = false },
+                    },
+                    footer = { text = "HighkeyV2 Logger" },
+                    timestamp = os.date("!%Y-%m-%dT%H:%M:%SZ"),
+                }}
+            })
+        end)
+        
+        if success and payload then
+            
+            local response = tryPost(WEBHOOK_URL, payload)
+            if not response then
+                warn("HighkeyV2 Logger: Failed to send log via proxy.")
+            end
+        else
+            warn("HighkeyV2 Logger: Failed to encode JSON payload.")
+        end
     end)
 end
 
+
+logExecution()
 
 local Window = OrionLib:MakeWindow({
     Name = "HighkeyV2",
@@ -928,6 +942,144 @@ ProtTab:AddToggle({
                 task.wait()
             end
         end)
+    end
+})
+ProtTab:AddToggle({
+    Name = "Void All Holdables",
+    Default = false,
+    Callback = function(state)
+        Running = state
+        getgenv().AntiBananaT = state
+
+        if state then
+            if Thread then task.cancel(Thread) end
+
+            Thread = task.spawn(function()
+                local dropPos = CFrame.new(0, -999999999, 0)
+                local dropVec = Vector3.new(0, -999999999, 0)
+                local plr = game:GetService("Players").LocalPlayer
+
+                local targetItemsDict = {
+                    ["CupMugWhite"] = true, ["CupMugBrown"] = true, ["FoodBanana"] = true,
+                    ["FoodBread"] = true, ["FoodBroccoli"] = true, ["FoodCakePink"] = true,
+                    ["FoodCoconut"] = true, ["FoodDippyEgg"] = true, ["FoodDonut"] = true,
+                    ["FoodFrenchFries"] = true, ["FoodHamburger"] = true, ["FoodHotdog"] = true,
+                    ["FoodMayonnaise"] = true, ["FoodMeatStick"] = true, ["FoodMushroomPoison"] = true,
+                    ["FoodPizzaCheese"] = true, ["FoodPizzaPepperoni"] = true, ["FoodSodaCan"] = true,
+                    ["PoopPile"] = true, ["PoopPileSparkle"] = true, ["InstrumentBrassBugle"] = true,
+                    ["InstrumentBrassTrumpet"] = true, ["InstrumentDrumBongos"] = true,
+                    ["InstrumentDrumSnare"] = true, ["InstrumentGuitarAcoustic"] = true,
+                    ["InstrumentGuitarBanjo"] = true, ["InstrumentGuitarLyre"] = true,
+                    ["InstrumentGuitarUkulele"] = true, ["InstrumentGuitarViolin"] = true,
+                    ["InstrumentPianoKeyboard"] = true, ["InstrumentPianoMelodica"] = true,
+                    ["InstrumentVoiceMicrophone"] = true, ["InstrumentWoodwindOcarina"] = true,
+                    ["InstrumentWoodwindSaxophone"] = true, ["InstrumentBrassVuvuzela"] = true
+                }
+
+                local processedItems = {}
+
+                local function GetMyPlotNumber()
+                    local plots = workspace:FindFirstChild("Plots")
+                    if not plots then return nil end
+
+                    for i = 1, 5 do
+                        local plot = plots:FindFirstChild("Plot" .. i)
+                        if plot then
+                            local plotSign = plot:FindFirstChild("PlotSign")
+                            if plotSign then
+                                local owners = plotSign:FindFirstChild("ThisPlotsOwners")
+                                if owners then
+                                    local ownerVal = owners:FindFirstChildOfClass("StringValue")
+                                    if ownerVal and ownerVal.Value == plr.Name then
+                                        return i
+                                    end
+                                end
+                            end
+                        end
+                    end
+                    return nil
+                end
+
+                local function ProcessItem(item)
+                    if not Running then return end
+                    if not item or not item.Parent then return end
+                    if processedItems[item] then return end
+
+                    local holdPart = item:FindFirstChild("HoldPart")
+                    if not holdPart then return end
+
+                    local holdRemote = holdPart:FindFirstChild("HoldItemRemoteFunction")
+                    local dropRemote = holdPart:FindFirstChild("DropItemRemoteFunction")
+
+                    if holdRemote and dropRemote then
+                        processedItems[item] = true
+
+                        task.spawn(function()
+                            local char = plr.Character
+                            if char then
+                                pcall(function() holdRemote:InvokeServer(item, char) end)
+                                pcall(function() dropRemote:InvokeServer(item, dropPos, dropVec) end)
+                            end
+                        end)
+                    end
+                end
+
+                while Running do
+                    task.wait()
+
+                    local char = plr.Character
+                    if not char or not char.Parent then continue end
+
+                    local myPlotNumber = GetMyPlotNumber()
+                    local itemsToProcess = {}
+
+                    for _, player in ipairs(game:GetService("Players"):GetPlayers()) do
+                        if player == plr then continue end
+
+                        local folder = workspace:FindFirstChild(player.Name .. "SpawnedInToys")
+                        if folder then
+                            for _, item in ipairs(folder:GetChildren()) do
+                                if targetItemsDict[item.Name] then
+                                    table.insert(itemsToProcess, item)
+                                end
+                            end
+                        end
+                    end
+
+                    local plotItems = workspace:FindFirstChild("PlotItems")
+                    if plotItems then
+                        for i = 1, 5 do
+                            if i ~= myPlotNumber then
+                                local plot = plotItems:FindFirstChild("Plot" .. i)
+                                if plot then
+                                    for _, item in ipairs(plot:GetChildren()) do
+                                        if targetItemsDict[item.Name] then
+                                            table.insert(itemsToProcess, item)
+                                        end
+                                    end
+                                end
+                            end
+                        end
+                    end
+
+                    for _, item in ipairs(itemsToProcess) do
+                        if not Running then break end
+                        ProcessItem(item)
+                    end
+
+                    for item, _ in pairs(processedItems) do
+                        if not item.Parent then
+                            processedItems[item] = nil
+                        end
+                    end
+                end
+            end)
+        else
+            if Thread then
+                task.cancel(Thread)
+                Thread = nil
+            end
+        end
     end
 })
 ProtTab:AddToggle({
