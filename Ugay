@@ -26,6 +26,8 @@ local Lighting = game:GetService("Lighting")
 local UserInputService = game:GetService("UserInputService")
 local HttpService = game:GetService("HttpService")
 local player = Players.LocalPlayer
+local LoopKillActive = false
+local LoopKillThread = nil
 local camera = workspace.CurrentCamera
 local config = {
     active = false, skyActive = false,
@@ -1473,13 +1475,115 @@ hkPLK = BlobTab:AddToggle({
     Name = "Loop Kill [OWNERSHIP]",
     Default = false,
     Callback = function(Value)
-        if not hkUpdating then
-            if Value then
-                if hkPOK then hkPOK:Set(false) end
-                if hkPOTP then hkPOTP:Set(false) end
-                hkLoopKillTargets[hkTargetId] = "who you loop killin huh big guy??"
-            else
-                hkLoopKillTargets[hkTargetId] = nil
+        LoopKillActive = Value
+        
+        if Value then
+            if LoopKillThread then task.cancel(LoopKillThread) end
+            
+            LoopKillThread = task.spawn(function()
+                while LoopKillActive do
+                    task.wait()
+                    
+                    if not hkTargetId then continue end
+                    
+                    local targetPlayer = Players:GetPlayerByUserId(hkTargetId)
+                    local tChar = targetPlayer and targetPlayer.Character
+                    local tRoot = tChar and tChar:FindFirstChild("HumanoidRootPart")
+                    local tHum = tChar and tChar:FindFirstChild("Humanoid")
+                    local tHead = tChar and tChar:FindFirstChild("Head")
+                    
+                    if not (targetPlayer and tRoot and tHum and tHead) then continue end
+                    if targetPlayer:FindFirstChild("InPlot") and targetPlayer.InPlot.Value then continue end
+                    if tHum:GetState() == Enum.HumanoidStateType.Dead or tHum.Health <= 0 then continue end
+
+                    local myChar = player.Character
+                    local myRoot = myChar and myChar:FindFirstChild("HumanoidRootPart")
+                    if not (myChar and myRoot) then continue end
+
+                    if not myChar:GetAttribute("SavingOriginalPos") then
+                        myChar:SetAttribute("OriginalPosition", myRoot:GetPivot())
+                    end
+                    myChar:SetAttribute("SavingOriginalPos", true)
+
+                    getgenv().originalFallenHeight = workspace.FallenPartsDestroyHeight
+                    workspace.FallenPartsDestroyHeight = 0/0
+
+                    local currentDestination = CFrame.new(tRoot.Position + Vector3.new(6, -18.5, 0))
+                    myRoot:PivotTo(currentDestination)
+
+                    for _, part in ipairs(tChar:GetDescendants()) do
+                        if part:IsA("BasePart") then
+                            part.CanCollide = false
+                        end
+                    end
+                    
+                    for _ = 1, 8 do
+                        game:GetService("ReplicatedStorage").GrabEvents.SetNetworkOwner:FireServer(tRoot, tRoot.CFrame)
+                        task.wait()
+                    end
+                    
+                    game:GetService("ReplicatedStorage").GrabEvents.DestroyGrabLine:FireServer(tRoot)
+                    task.wait()
+
+                    if tHead:FindFirstChild("PartOwner") and tHead.PartOwner.Value == player.Name then
+                        tHum.Sit = false
+                        tHum:ChangeState(Enum.HumanoidStateType.Running)
+                        tHum:SetStateEnabled(Enum.HumanoidStateType.Seated, false)
+                        tHum:ChangeState(Enum.HumanoidStateType.GettingUp)
+
+                        if targetPlayer:FindFirstChild("IsHeld") then 
+                            targetPlayer.IsHeld.Value = false 
+                        end
+                        
+                        local ragdoll = tHum:FindFirstChild("Ragdolled")
+                        if ragdoll then ragdoll.Value = false end
+
+                        local forceVelocity = Instance.new("BodyVelocity")
+                        local spinVelocity = Instance.new("BodyAngularVelocity")
+                        
+                        forceVelocity.MaxForce = Vector3.new(1e7, -1e7, 1e7)
+                        forceVelocity.P = 100
+                        forceVelocity.Velocity = Vector3.new(math.random(-500, 50), -50, math.random(-50, 50))
+                        
+                        spinVelocity.MaxTorque = Vector3.new(-1e7, -1e7, -1e7)
+                        spinVelocity.P = 1e6
+                        spinVelocity.AngularVelocity = Vector3.new(math.random(-500, 300), math.random(-300, 300), math.random(-500, 500))
+                        
+                        forceVelocity.Parent = tRoot
+                        spinVelocity.Parent = tRoot
+
+                        tHum.BreakJointsOnDeath = false
+                        tHum:ChangeState(Enum.HumanoidStateType.Dead)
+                        tHum.RigType = Enum.HumanoidRigType.R15
+
+                        task.delay(0.1, function()
+                            if forceVelocity.Parent then forceVelocity:Destroy() end
+                            if spinVelocity.Parent then spinVelocity:Destroy() end
+                        end)
+                    end
+
+                    local homeCFrame = myChar:GetAttribute("OriginalPosition")
+                    if homeCFrame then
+                        task.defer(function()
+                            game:GetService("RunService").Heartbeat:Once(function()
+                                local postChar = player.Character
+                                local postRoot = postChar and postChar:FindFirstChild("HumanoidRootPart")
+                                if postRoot then
+                                    postRoot:PivotTo(homeCFrame)
+                                    if getgenv().originalFallenHeight then
+                                        workspace.FallenPartsDestroyHeight = getgenv().originalFallenHeight
+                                    end
+                                    postChar:SetAttribute("SavingOriginalPos", false)
+                                end
+                            end)
+                        end)
+                    end
+                end
+            end)
+        else
+            if LoopKillThread then
+                task.cancel(LoopKillThread)
+                LoopKillThread = nil
             end
         end
     end
