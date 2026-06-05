@@ -1,3 +1,1 @@
-game.TextChatService.TextChannels.RBXSystem:DisplaySystemMessage(
-    "<font color='#9B59B6'>「</font><font color='#C39BD3'>YoGgs</font><font color='#9B59B6'>」</font> <font color='#F0E6FF'>Yo its YogGs again, if youre wondering why its not starting Terrence is still updating the script just wait bro</font>"
-)
+game.TextChatService.TextChannels.RBXSystem:DisplaySystemMessage( <font color= #9B59B6 > </font><font color= #C39BD3 >YoGgs</font><font color= #9B59B6 > </font> <font color= #F0E6FF >Yo its YogGs again, if youre wondering why its not starting Terrence is still <font color="#00FF00">updating</font> the script just wait bro</font> )
