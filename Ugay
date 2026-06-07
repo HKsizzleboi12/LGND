@@ -7,9 +7,9 @@ end
 local channel = game.TextChatService.TextChannels.RBXSystem
 
 if _G.Mcgrooveryness == 1 then
-    channel:DisplaySystemMessage("<font color='#9B59B6'> </font><font color='#C39BD3'>YoGgs</font><font color='#9B59B6'> </font> <font color='#F0E6FF'>Yo its YogGs again, if youre wondering why its not starting Terrence is still </font><font color='#00FF00'>updating</font><font color='#F0E6FF'> the script just wait bro</font>")
+    channel:DisplaySystemMessage("<font color='#9B59B6'> </font><font color='#C39BD3'>YoGgs</font><font color='#9B59B6'> </font> <font color='#F0E6FF'>Yo its YogGs again, if youre wondering why its not starting Terrence made a </font><font color='#00FF00'>new</font><font color='#F0E6FF'>one just dm him for it</font>")
 elseif _G.Mcgrooveryness == 2 then
-    channel:DisplaySystemMessage("<font color='#9B59B6'> </font><font color='#C39BD3'>YoGgs</font><font color='#9B59B6'> </font> <font color='#F0E6FF'>i already told you its getting </font><font color='#00FF00'>updated</font><font color='#F0E6FF'> stubborn kid</font>")
+    channel:DisplaySystemMessage("<font color='#9B59B6'> </font><font color='#C39BD3'>YoGgs</font><font color='#9B59B6'> </font> <font color='#F0E6FF'>i already told you there is a </font><font color='#00FF00'>new</font><font color='#F0E6FF'> one lil bro</font>")
 elseif _G.Mcgrooveryness == 3 then
     channel:DisplaySystemMessage("<font color='#9B59B6'> </font><font color='#C39BD3'>YoGgs</font><font color='#9B59B6'> </font> <font color='#F0E6FF'>Fuck you</font>")
 else
